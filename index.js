@@ -101,6 +101,3 @@ async function getUserById(id) {
   });
 }
 
-fastify.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
