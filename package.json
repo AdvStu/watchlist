@@ -1,13 +1,15 @@
 {
-  "name": "numberplate-watchlist",
+  "name": "basic-express-app",
   "version": "1.0.0",
-  "description": "A Node.js application for managing watchlists of number plates",
-  "main": "index.js",
+  "description": "A basic Express.js application",
+  "main": "app.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node app.js"
   },
-  "devDependencies": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "engines": {
+    "node": "16.x"
+  }
 }
