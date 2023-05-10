@@ -1,11 +1,12 @@
 {
-  "apps": [{
-    "name": "My App",
-    "script": "server.js",
-    "watch": true,
-    "env": {
-      "NODE_ENV": "production",
-      "PORT": "3000"
-    }
-  }]
+  "name": "anprwatchlist",
+  "version": "1.0.0",
+  "description": "My Node.js app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "http": "^0.0.1"
+  }
 }
