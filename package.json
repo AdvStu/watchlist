@@ -1,17 +1,25 @@
 {
-  "name": "anpr-watchlist",
+  "name": "numberplate-watchlist",
   "version": "1.0.0",
-  "description": "A watchlist application for license plates using ANPR technology",
-  "main": "server.js",
+  "description": "A Node.js application for managing watchlists of number plates",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "node.js",
+    "watchlist",
+    "numberplates"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
-    "dotenv": "^10.0.0",
-    "express": "^4.17.2",
-    "mongoose": "^6.1.2"
+    "bcryptjs": "^2.4.3",
+    "ejs": "^3.1.6",
+    "fastify": "^3.24.0",
+    "fastify-formbody": "^5.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "sqlite3": "^5.0.2",
+    "uuid": "^8.3.2"
   }
 }
