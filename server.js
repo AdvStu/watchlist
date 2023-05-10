@@ -50,7 +50,7 @@ app.get('/api/watchlist/:tenantId', async (req, res) => {
 
 // Serve the index.html file when the root URL is requested
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/frontend/index.html');
+  res.sendFile(__dirname + '/index.html');
 });
 
 // Error handling middleware
