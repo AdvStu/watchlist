@@ -1,91 +1,68 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ANPR Watchlist</title>
+  </head>
+  <body>
+    <h1>ANPR Watchlist</h1>
+    <form id="watchlist-form">
+      <label for="tenant-id">Tenant ID:</label>
+      <input type="text" id="tenant-id" name="tenantId" required /><br />
+      <label for="license-plate">License plate:</label>
+      <input type="text" id="license-plate" name="licensePlate" required /><br />
+      <button type="submit">Add to watchlist</button>
+    </form>
+    <table id="watchlist-table">
+      <thead>
+        <tr>
+          <th>Tenant ID</th>
+          <th>License Plate</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <script>
+      const watchlistForm = document.getElementById('watchlist-form');
+      const watchlistTableBody = document.querySelector('#watchlist-table tbody');
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/anpr', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
+      // Add a new watchlist entry when the form is submitted
+      watchlistForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(watchlistForm);
+        const response = await fetch('/api/watchlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.fromEntries(formData)),
+        });
+        if (response.ok) {
+          alert('Watchlist entry added!');
+        } else {
+          const data = await response.json();
+          alert(`Failed to add watchlist entry: ${data.error}`);
+        }
+      });
 
-// Define a schema for the watchlist collection
-const WatchlistSchema = new mongoose.Schema({
-  tenantId: String,
-  licensePlate: String
-});
-
-// Define a model for the watchlist collection
-const WatchlistModel = mongoose.model('Watchlist', WatchlistSchema);
-
-const app = express();
-
-// Serve static files from the 'frontend' directory
-app.use(express.static('frontend'));
-
-// Parse incoming request bodies in a middleware before your handlers
-app.use(bodyParser.json());
-
-// Create a new watchlist for a tenant
-app.post('/api/watchlist', async (req, res) => {
-  const { tenantId, licensePlate } = req.body;
-  const watchlist = new WatchlistModel({ tenantId, licensePlate });
-  try {
-    await watchlist.save();
-    res.json({ success: true });
-  } catch (error) {
-    res.json({ success: false, error: error.message });
-  }
-});
-
-// Retrieve all watchlists for a tenant
-app.get('/api/watchlist/:tenantId', async (req, res) => {
-  const tenantId = req.params.tenantId;
-  try {
-    const watchlist = await WatchlistModel.find({ tenantId });
-    res.json(watchlist);
-  } catch (error) {
-    res.json({ success: false, error: error.message });
-  }
-});
-
-// Handle GET requests with query string parameters
-app.get('/', async (req, res) => {
-  const { tenantId, licensePlate } = req.query;
-
-  // If both tenantId and licensePlate are present, create a new watchlist entry
-  if (tenantId && licensePlate) {
-    const watchlist = new WatchlistModel({ tenantId, licensePlate });
-    try {
-      await watchlist.save();
-      res.json({ success: true });
-    } catch (error) {
-      res.json({ success: false, error: error.message });
-    }
-  }
-
-  // If only tenantId is present, retrieve all watchlist entries for that tenant
-  else if (tenantId) {
-    try {
-      const watchlist = await WatchlistModel.find({ tenantId });
-      res.json(watchlist);
-    } catch (error) {
-      res.json({ success: false, error: error.message });
-    }
-  }
-
-  // If neither tenantId nor licensePlate are present, send the index.html file
-  else {
-    res.sendFile(__dirname + '/frontend/index.html');
-  }
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Internal server error');
-});
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+      // Load all watchlist entries for a tenant when the page loads
+      window.addEventListener('load', async () => {
+        const tenantId = new URLSearchParams(window.location.search).get('tenantId');
+        if (!tenantId) {
+          return;
+        }
+        const response = await fetch(`/api/watchlist/${tenantId}`);
+        if (response.ok) {
+          const watchlistEntries = await response.json();
+          for (const entry of watchlistEntries) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${entry.tenantId}</td><td>${entry.licensePlate}</td>`;
+            watchlistTableBody.appendChild(row);
+          }
+        } else {
+          const data = await response.json();
+          alert(`Failed to load watchlist entries: ${data.error}`);
+        }
+      });
+    </script>
+  </body>
+</html>
