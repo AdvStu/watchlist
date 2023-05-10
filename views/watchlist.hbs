@@ -1,0 +1,30 @@
+{{#layout}}
+  <h2>{{watchlist.name}}</h2>
+  {{#if numberplates.length}}
+  <table>
+    <thead>
+      <tr>
+        <th>Numberplate</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each numberplates}}
+      <tr>
+        <td>{{this}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{else}}
+  <p>No numberplates found</p>
+  {{/if}}
+
+  <h2>Add Numberplate</h2>
+  <form method="post" action="/watchlists/{{watchlist.id}}">
+    <label>
+      Numberplate:
+      <input type="text" name="numberplate" required>
+    </label>
+    <button type="submit">Add</button>
+  </form>
+{{/layout}}
