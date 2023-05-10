@@ -1,9 +1,0 @@
-{
-  "name": "numberplate-watchlist",
-  "version": "1.0.0",
-  "description": "A Node.js application for managing watchlists of number plates",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  }
-}
