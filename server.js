@@ -53,6 +53,12 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/frontend/index.html');
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Internal server error');
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
