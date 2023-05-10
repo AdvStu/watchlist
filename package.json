@@ -1,5 +1,5 @@
 {
-  "name": "anprwatchlist",
+  "name": "my-app",
   "version": "1.0.0",
   "description": "My Node.js app",
   "main": "server.js",
@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "http": "^0.0.1"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
