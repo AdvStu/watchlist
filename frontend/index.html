@@ -1,46 +1,91 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>ANPR Watchlist</title>
-  <meta charset="utf-8">
-</head>
-<body>
-  <h1>ANPR Watchlist</h1>
-  <form id="addWatchlistForm">
-    <label for="tenantId">Tenant ID:</label>
-    <input type="text" id="tenantId" name="tenantId"><br>
-    <label for="licensePlate">License Plate:</label>
-    <input type="text" id="licensePlate" name="licensePlate"><br>
-    <input type="submit" value="Add to Watchlist">
-  </form>
-  <div id="watchlist"></div>
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
-  <script>
-    // Listen for the form submit event
-    document.getElementById('addWatchlistForm').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const formData = new FormData(event.target);
-      const tenantId = formData.get('tenantId');
-      const licensePlate = formData.get('licensePlate');
-      const response = await fetch('/api/watchlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId, licensePlate })
-      });
-      const data = await response.json();
-      if (data.success) {
-        alert('License plate added to watchlist');
-        event.target.reset();
-      } else {
-        alert(`Error adding license plate: ${data.error}`);
-      }
-    });
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/anpr', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
-    // Retrieve watchlist data for a tenant
-    async function getWatchlistData(tenantId) {
-      const response = await fetch(`/api/watchlist/${tenantId}`);
-      const data = await response.json();
-      return data;
+// Define a schema for the watchlist collection
+const WatchlistSchema = new mongoose.Schema({
+  tenantId: String,
+  licensePlate: String
+});
+
+// Define a model for the watchlist collection
+const WatchlistModel = mongoose.model('Watchlist', WatchlistSchema);
+
+const app = express();
+
+// Serve static files from the 'frontend' directory
+app.use(express.static('frontend'));
+
+// Parse incoming request bodies in a middleware before your handlers
+app.use(bodyParser.json());
+
+// Create a new watchlist for a tenant
+app.post('/api/watchlist', async (req, res) => {
+  const { tenantId, licensePlate } = req.body;
+  const watchlist = new WatchlistModel({ tenantId, licensePlate });
+  try {
+    await watchlist.save();
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Retrieve all watchlists for a tenant
+app.get('/api/watchlist/:tenantId', async (req, res) => {
+  const tenantId = req.params.tenantId;
+  try {
+    const watchlist = await WatchlistModel.find({ tenantId });
+    res.json(watchlist);
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// Handle GET requests with query string parameters
+app.get('/', async (req, res) => {
+  const { tenantId, licensePlate } = req.query;
+
+  // If both tenantId and licensePlate are present, create a new watchlist entry
+  if (tenantId && licensePlate) {
+    const watchlist = new WatchlistModel({ tenantId, licensePlate });
+    try {
+      await watchlist.save();
+      res.json({ success: true });
+    } catch (error) {
+      res.json({ success: false, error: error.message });
     }
+  }
 
-    // Render
+  // If only tenantId is present, retrieve all watchlist entries for that tenant
+  else if (tenantId) {
+    try {
+      const watchlist = await WatchlistModel.find({ tenantId });
+      res.json(watchlist);
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  }
+
+  // If neither tenantId nor licensePlate are present, send the index.html file
+  else {
+    res.sendFile(__dirname + '/frontend/index.html');
+  }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Internal server error');
+});
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
