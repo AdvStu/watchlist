@@ -95,4 +95,12 @@ async function getUserById(id) {
       if (err) {
         reject(err);
       } else {
-       
+        resolve(row);
+      }
+    });
+  });
+}
+
+fastify.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
