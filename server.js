@@ -1,91 +1,67 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/anpr', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
-
-// Define a schema for the watchlist collection
-const WatchlistSchema = new mongoose.Schema({
-  tenantId: String,
-  licensePlate: String
-});
-
-// Define a model for the watchlist collection
-const WatchlistModel = mongoose.model('Watchlist', WatchlistSchema);
+dotenv.config();
 
 const app = express();
 
-// Serve static files from the 'frontend' directory
-app.use(express.static('frontend'));
-
-// Parse incoming request bodies in a middleware before your handlers
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Create a new watchlist for a tenant
-app.post('/api/watchlist', async (req, res) => {
-  const { tenantId, licensePlate } = req.body;
-  const watchlist = new WatchlistModel({ tenantId, licensePlate });
-  try {
-    await watchlist.save();
-    res.json({ success: true });
-  } catch (error) {
-    res.json({ success: false, error: error.message });
-  }
+mongoose.connect(process.env.DB_CONNECT, { useNewUrlParser: true, useUnifiedTopology: true });
+
+const db = mongoose.connection;
+
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  console.log('Connected to database');
 });
 
-// Retrieve all watchlists for a tenant
-app.get('/api/watchlist/:tenantId', async (req, res) => {
-  const tenantId = req.params.tenantId;
-  try {
-    const watchlist = await WatchlistModel.find({ tenantId });
-    res.json(watchlist);
-  } catch (error) {
-    res.json({ success: false, error: error.message });
-  }
+const watchlistSchema = new mongoose.Schema({
+  tenantId: String,
+  licensePlate: String,
+  time: { type: Date, default: Date.now }
 });
 
-// Handle GET requests with query string parameters
-app.get('/', async (req, res) => {
-  const { tenantId, licensePlate } = req.query;
+const Watchlist = mongoose.model('Watchlist', watchlistSchema);
 
-  // If both tenantId and licensePlate are present, create a new watchlist entry
-  if (tenantId && licensePlate) {
-    const watchlist = new WatchlistModel({ tenantId, licensePlate });
-    try {
-      await watchlist.save();
-      res.json({ success: true });
-    } catch (error) {
-      res.json({ success: false, error: error.message });
+app.post('/watchlist', function(req, res) {
+  const tenantId = req.body.tenantId;
+  const licensePlate = req.body.licensePlate;
+
+  Watchlist.findOneAndUpdate({ tenantId: tenantId, licensePlate: licensePlate },
+    { tenantId: tenantId, licensePlate: licensePlate },
+    { upsert: true },
+    function(err, doc) {
+      if (err) {
+        return res.send(500, { error: err });
+      }
+
+      return res.send('success');
+    });
+});
+
+app.get('/watchlist', function(req, res) {
+  const tenantId = req.query.tenantId;
+  const licensePlate = req.query.licensePlate;
+
+  Watchlist.findOne({ tenantId: tenantId, licensePlate: licensePlate }, function(err, watchlist) {
+    if (err) {
+      return res.send(500, { error: err });
     }
-  }
 
-  // If only tenantId is present, retrieve all watchlist entries for that tenant
-  else if (tenantId) {
-    try {
-      const watchlist = await WatchlistModel.find({ tenantId });
-      res.json(watchlist);
-    } catch (error) {
-      res.json({ success: false, error: error.message });
+    if (!watchlist) {
+      return res.send(false);
     }
-  }
 
-  // If neither tenantId nor licensePlate are present, send the index.html file
-  else {
-    res.sendFile(__dirname + '/frontend/index.html');
-  }
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Internal server error');
+    return res.send(true);
+  });
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
+
+app.listen(port, function() {
   console.log(`Server running on port ${port}`);
 });
