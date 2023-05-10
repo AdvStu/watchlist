@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management</title>
+    <style>
+        /* Add your custom styles here */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Customer Management</h1>
+    <form id="customer-form">
+        <input type="hidden" id="customer-id" />
+        <label for="company-name">Company Name:</label>
+        <input type="text" id="company-name" required />
+        <br/>
+        <label for="email">Email:</label>
+        <input type="email" id="email" required />
+        <br/>
+        <label for="mobile-number">Mobile Number:</label>
+        <input type="text" id="mobile-number" required />
+        <br/>
+        <button type="submit">Submit</button>
+    </form>
+    <h2>Customers</h2>
+    <table id="customer-table">
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Email</th>
+                <th>Mobile Number</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <script>
+        // Add your JavaScript code here
+        const form = document.getElementById('customer-form');
+        const customerIdInput = document.getElementById('customer-id');
+        const companyNameInput = document.getElementById('company-name');
+        const emailInput = document.getElementById('email');
+        const mobileNumberInput = document.getElementById('mobile-number');
+        const table = document.getElementById('customer-table').getElementsByTagName('tbody')[0];
+
+        // Fetch customers and display them
+        async function fetchCustomers() {
+            const response = await fetch('/api/customers');
+            const customers = await response.json();
+            table.innerHTML = '';
+
+            for (const customer of customers) {
+                addCustomerToTable(customer);
+            }
+        }
+
+        // Add a customer to the table
+        function addCustomerToTable(customer) {
+            const row = table.insertRow();
+
+            row.insertCell().innerText = customer.company_name;
+            row.insertCell().innerText = customer.email;
+            row.insertCell().innerText = customer.mobile_number;
+
+            const actionsCell = row.insertCell();
+            const editButton = document.createElement('button');
+            editButton.innerText = 'Edit';
+            editButton.onclick = () => {
+                customerIdInput.value = customer.id;
+                companyNameInput.value = customer.company_name;
+                emailInput.value = customer.email;
+                mobileNumberInput.value = customer.mobile_number;
+            };
+            actionsCell.appendChild(editButton);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.innerText = 'Delete';
+            deleteButton.onclick = async () => {
+                await fetch(`/api/customers/${customer.id}`, {
+                    method: 'DELETE'
+                });
+                fetchCustomers();
+            };
+            actionsCell.appendChild(deleteButton);
+        }
+
+        // Form submission handler
+        form.onsubmit = async (event) => {
+            event.preventDefault();
+
+            const customerData = {
+                company_name: companyNameInput.value,
+                email: emailInput.value,
+                mobile_number: mobileNumberInput.value
+            };
+
+            if (customerIdInput.value) {
+                // Update existing customer
+                await fetch(`/api/customers/${customerIdInput.value}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(customerData)
+                });
+            } else {
+                // Create a new customer
+                await fetch('/api/customers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(customerData)
+                });
+            }
+
+            // Clear the form
+            form.reset();
+            customerIdInput.value = '';
+
+            // Refresh the customer list
+            fetchCustomers();
+        };
+
+        // Fetch customers on page load
+        fetchCustomers();
+    </script>
+</body>
+</html>
+
