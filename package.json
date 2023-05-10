@@ -1,15 +1,17 @@
-// package.json
 {
-  "name": "anpr-watchlist",
+  "name": "anprwatchlist",
   "version": "1.0.0",
-  "description": "ANPR Watchlist application",
+  "description": "A watchlist application for license plates using ANPR technology",
   "main": "server.js",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mongoose": "^6.0.13"
+  },
+  "engines": {
+    "node": "14.x"
+  },
   "scripts": {
     "start": "node server.js"
-  },
-  "dependencies": {
-    "dotenv": "^10.0.0",
-    "express": "^4.17.2",
-    "mongoose": "^6.1.2"
   }
 }
