@@ -19,6 +19,9 @@ const WatchlistModel = mongoose.model('Watchlist', WatchlistSchema);
 
 const app = express();
 
+// Serve static files from the 'frontend' directory
+app.use(express.static('frontend'));
+
 // Parse incoming request bodies in a middleware before your handlers
 app.use(bodyParser.json());
 
@@ -43,6 +46,11 @@ app.get('/api/watchlist/:tenantId', async (req, res) => {
   } catch (error) {
     res.json({ success: false, error: error.message });
   }
+});
+
+// Serve the index.html file when the root URL is requested
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/frontend/index.html');
 });
 
 const port = process.env.PORT || 3000;
