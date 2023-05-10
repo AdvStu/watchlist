@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ANPR Watchlist</title>
+  <meta charset="utf-8">
+</head>
+<body>
+  <h1>ANPR Watchlist</h1>
+  <form id="addWatchlistForm">
+    <label for="tenantId">Tenant ID:</label>
+    <input type="text" id="tenantId" name="tenantId"><br>
+    <label for="licensePlate">License Plate:</label>
+    <input type="text" id="licensePlate" name="licensePlate"><br>
+    <input type="submit" value="Add to Watchlist">
+  </form>
+  <div id="watchlist"></div>
+
+  <script>
+    // Listen for the form submit event
+    document.getElementById('addWatchlistForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const tenantId = formData.get('tenantId');
+      const licensePlate = formData.get('licensePlate');
+      const response = await fetch('/api/watchlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, licensePlate })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('License plate added to watchlist');
+        event.target.reset();
+      } else {
+        alert(`Error adding license plate: ${data.error}`);
+      }
+    });
+
+    // Retrieve watchlist data for a tenant
+    async function getWatchlistData(tenantId) {
+      const response = await fetch(`/api/watchlist/${tenantId}`);
+      const data = await response.json();
+      return data;
+    }
+
+    // Render
