@@ -48,9 +48,35 @@ app.get('/api/watchlist/:tenantId', async (req, res) => {
   }
 });
 
-// Serve the index.html file when the root URL is requested
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+// Handle GET requests with query string parameters
+app.get('/', async (req, res) => {
+  const { tenantId, licensePlate } = req.query;
+
+  // If both tenantId and licensePlate are present, create a new watchlist entry
+  if (tenantId && licensePlate) {
+    const watchlist = new WatchlistModel({ tenantId, licensePlate });
+    try {
+      await watchlist.save();
+      res.json({ success: true });
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  }
+
+  // If only tenantId is present, retrieve all watchlist entries for that tenant
+  else if (tenantId) {
+    try {
+      const watchlist = await WatchlistModel.find({ tenantId });
+      res.json(watchlist);
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  }
+
+  // If neither tenantId nor licensePlate are present, send the index.html file
+  else {
+    res.sendFile(__dirname + '/frontend/index.html');
+  }
 });
 
 // Error handling middleware
